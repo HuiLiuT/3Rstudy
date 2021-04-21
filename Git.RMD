@@ -1,0 +1,461 @@
+---
+title: "Git"
+author: "Hui Liu"
+date: "2021/4/9"
+output: 
+  word_document:
+    toc: yes
+    number_sections: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# 什么是 Git?
+
+Git 是一个版本控制系统,
+它最初的目的是帮助开发团队在大型软件项目中协作。Git以一种理智的、高度结构化的方式管理一组文件(称为存储库**repository**)的演变。
+就像Word中的修改轨迹功能，但更加严格，强大，并且可以扩展到
+多个文件。
+
+一个单独的数据分析师，在一台计算机上工作，将受益于采用版本控制。但还不足以证明安装和工作流程剧变带来的痛苦。
+如果您担心的只是文件版本备份，那么还有更简单的方法，Git只有在考虑到与他人沟通和协作的开销时才会利大于弊。
+Git 是用于 Linux内核开发的版本控制工具。与常用的版本控制工具 CVS, Subversion 等不同，它采用了分布式版本库的方式，不必服务器端软件支持。
+
+这里要明确一下，所有的版本控制系统，其实只能跟踪文本文件的改动，比如TXT文件，网页，所有的程序代码等等，Git也不例外。而图片、视频这些二进制文件，虽然也能由版本控制系统管理，但没法跟踪文件的变化，只能把二进制文件每次改动串起来，也就是只知道图片从100KB改成了120KB，但到底改了啥，版本控制系统不知道，也没法知道。不幸的是，Microsoft的Word格式是二进制格式，因此，版本控制系统是没法跟踪Word文件的改动的，但是可以追踪Rmarkdown。
+
+参考内容：<https://github.com/mckf111/mckf111.github.io/blob/master/_posts/2018-06-15-%E5%AD%A6R%E5%AD%A6%E5%88%9D%E9%98%B6-03-R%EF%BC%8CGit%E5%92%8CGithub-1.md>
+
+## 下载和安装Git
+
+- 下载路径<https://git-scm.com/downloads> 
+- [Git 完整命令手册](http://git-scm.com/docs)
+- [Git 大全](https://gitee.com/all-about-git)
+- <https://sethrobertson.github.io/GitFixUm/fixup.html#badmerge>
+- <https://git-scm.com/video/what-is-version-control>
+
+
+
+## 基本参数设置
+
+```
+git config --global user.name "your_name"
+git config --global user.email "email@example.com"
+git config --global --list #查看全局变量
+```
+
+## 注册相应的GitHub账户(或者其他平台)
+
+```{r, echo=F,out.width='25%', fig.align='center', fig.cap='...'}
+knitr::include_graphics(path='signup to GitHub.png')
+```
+```{r, echo=F,out.width='25%', fig.align='center', fig.cap='...'}
+knitr::include_graphics(path='verify email address.png')
+```
+
+## 创建SSH密钥
+
+本地的git仓库和github上的仓库是通过SSH(secureshell)加密传输的，也就是你每次的版本同步更新，都要在验证密码正确的前提下进行:
+
+```
+ssh-keygen -t rsa -C "email@example.com"
+```
+把email地址换成你自己常用的，设置名称和密码执行完上述命令后，你主目录(~)中就会有.ssh文件夹出现，里面包含两个文件：id_rsa和id_rsa.pub，前面是私钥，不可泄露，而后面的是公钥(public)，这是要提交给github的。
+
+把id_rsa.pub的内容提交给github 
+
+```
+cd ~/.ssh
+cat id_rsa.pub
+```
+将屏幕上的内容全部复制下来，再来到你的github主页,点击`Settings - SSH and GPG keys - New SSH key -` 取个title,建议与之前的key同名，然后把刚才复制的内容全部粘贴到下面的key框中 - 点击`Add SSH key`，至此，你的电脑本地仓库就和github配置好了安全连接。
+
+
+## 创建版本库 (git init)
+假设你在一个名为3Rstudy的文件夹中写软件，你想对这个文件夹（在git中，我们一般称之为库，repository or repo）进行git监控，怎么操作？
+```
+cd C:/Users/admin/Documents/GitHub/3Rstudy
+git init ## Initialized empty Git repository 
+```
+
+会出现上面一行字，代表git已经在监控你的3Rstudy库了，并且创建了一个隐藏文件夹.git，没事别碰它，这是git的命根子！
+
+查看状态 (git status)
+在git操作的过程中，我们需要时时掌握监控状态，有没有新的增改删？和远程库有没有同步？等等。
+
+```
+git status
+## On branch master
+## Initial commit
+## nothing to commit (create/copy files and use "git add" to track)
+```
+
+
+## 提交改动(git add和git commit)
+当你在进行任何改动时，git都会关注到，但它还没有拍照，所以，你想进行时空穿梭还早了点。那如何拍照呢？按快门add，打包存照commit。注意：add这一步也被成为stage，标志着你的改动被添加进了缓存区，但还未进入监控的版本库中，属于中间的一个stage！
+```
+touch readme.txt # create a new readme.txt file
+git status
+## On branch master
+## Initial commit
+## Untracked files:
+##    (use "git add <file>..." to include in what will be committed)
+##         readme.txt
+## nothing added to commit but untracked files present (use "git add" to track)
+
+git add readme.txt
+git commit -m 'add readme file'
+
+## [master (root-commit) 90b9f6a] add readme file
+## 1 file changed, 0 insertions(+), 0 deletions(-)
+## create mode 100644 readme.txt
+
+```
+commit后面的-m参数是message的意思，给你每次打包存照加上一点信息，方便以后查找。另外，每个commit都有一个唯一的hash码对应，保证不会互相混淆，也方便准确的时空穿梭！
+可以多次拍照(add)，一次打包提交(commit)
+
+git是对改动本身打包存照，而非对改动的文件存照，所以没有add的改动是不会被后面的commit保存下来的，一定记住监控分两步：add + commit！
+
+## 查看改动(git diff)
+
+如果想对比一下这次的改动和上次有啥区别，git diff（difference）能清晰展示你要的信息。为了让命令行窗口漂亮点，我们先给git的指令上点颜色：
+```
+git config --global color.ui true
+```
+接着，我们给readme.txt加点内容，用你喜爱的编辑器打开，然后添加一行字：I want to learn git!，保存，查看状态：
+```
+git status
+## On branch master
+## Changes not staged for commit:
+##   (use "git add <file>..." to update what will be committed)
+##   (use "git checkout -- <file>..." to discard changes in working directory)
+##         modified:   readme.txt
+## no changes added to commit (use "git add" and/or "git commit -a")
+```
+
+git告诉我们有改动Changes没有存照进入缓存区not staged，如果过了一段时间，你再回来工作，忘了具体改了啥，不敢随便提交，咋办？
+
+```
+git diff readme.txt
+## diff --git a/readme.txt b/readme.txt
+## index e69de29..235024b 100644
+## --- a/readme.txt
+## +++ b/readme.txt
+## @@ -0,0 +1 @@
+## +I want to learn git!
+## \ No newline at end of file
+```
+改动一目了然！
+
+
+## 改动日志(git log)
+当你的3Rstudy存在了一段时间后，改来改去，会有很多次的commit被保存在版本库中，如何查看一下做了哪些改动呢？这样，既可以史为镜，也能为以后的“时光倒流”做准备。
+
+如果直接输入`git log`，输出的结果会比较冗杂，不容易把握信息概要，所以一般要加上几个参数（--pretty=oneline --abbrev-commit，具体含义请对比不加参数时的输出来理解）来美化输出：
+
+```
+git log --pretty=oneline --abbrev-commit
+## 167960c  (HEAD -> master) add readme file
+```
+
+日志显示，目前有一个commit，167960c是它唯一的hash码的前几位（这是随机分配的，所以你的电脑上的码一般不会和我的一样，这很正常），它的message是add readme file，这是我们之前自己标注的。另外，后面会说到，HEAD是指向当前版本的指针，目前就指在这个唯一的commit上，master是我们目前的版本分支，称为主分支，也是必须有的一个分支！
+
+
+
+## 时光倒流(git reset)
+如果我们想回到之前的某个版本，那就要使出杀手锏`git reset`了，为了方便演示，我们先做点准备，首先提交之前的改动（即加上I want to learn git!这行字）：
+```
+git add readme.txt
+git commit -m 'first change in readme'
+## [master ddafbba] first change in readme
+##  1 file changed, 1 insertion(+)
+
+git status
+## On branch master
+## nothing to commit, working tree clean
+```
+接下来，我们再在编辑器中添加第二行字Git is awesome!，保存。
+
+```
+git diff readme.txt
+## diff --git a/readme.txt b/readme.txt
+## index 235024b..76d1c1b 100644
+## --- a/readme.txt
+## +++ b/readme.txt
+## @@ -1 +1,2 @@
+## -I want to learn git!
+## \ No newline at end of file
+## +I want to learn git!
+## +Git is awesome!
+## \ No newline at end of file
+
+git add readme.txt
+git commit -m 'second change in readme'
+## [master d63de44] second change in readme
+##  1 file changed, 2 insertions(+), 1 deletion(-)
+```
+
+这时，整个master分支已经有了3个commit了，我们可以查看一下日志：
+```
+git log --pretty=oneline --abbrev-commit
+##e8645c2 (HEAD -> main) second change in readme
+##cb159f9 first change in readme
+##167960c add readme file
+
+```
+
+这时，我们发现了最近的提交有误，需要回到上一个提交的状态（hash为cb159f9），怎么办？
+
+第一种方法，如果只需要回到最近几次的版本，那么直接移动HEAD指针即可，回退一版：`HEAD^`，回退两版：`HEAD^^`，依次类推；或者用数字表示：退N版：`HEAD~N`。
+```
+git reset --hard HEAD^
+## HEAD is now at cb159f9 first change in readme
+```
+此时，版本已经倒流到倒数第二个commit提交后的状态，可以查看目录确认一下。（--hard，顾名思义，硬删除，把之后所有的改动都删掉）
+
+第二种方法，如果想要回到很久之前的一个版本，写^或者~N都不合实际，那么可以用commit id，即hash码去回退，先用git log去查看之前的commit，找到你想回退的那个版本id，然后reset。比如，上面的例子，也可以这样操作：
+
+```
+git reset --hard cb159f9
+## HEAD is now at cb159f9 first change in readme
+```
+个人推荐用第二种方式，准确定位，省去不必要的麻烦！
+
+## 时光前流(git reflog + git reset)
+假设你把版本倒流了，老板不喜欢，让你再改回来，咋办？git一样能轻松搞定，还是接上面的例子，我们想回到最新的版本second change in readme，首先，得找到这个commit id，git reflog可以记录你的每一次commit，不论是HEAD之前还是之后，只要你commit过，它就记录下来了，然后再reset即可。
+```
+git reflog
+##cb159f9 (HEAD -> main) HEAD@{0}: reset: moving to cb159f9
+##e8645c2 HEAD@{1}: commit: second change in readme
+##cb159f9 (HEAD -> main) HEAD@{2}: commit: first change in readme
+##167960c HEAD@{3}: commit: add readme file
+##7ad3c58 (origin/main, origin/HEAD) HEAD@{4}: pull --progress origin: Merge made by the 'recursive' strategy.
+##b1eabd8 HEAD@{5}: commit: new files
+##b39abb4 HEAD@{6}: clone: from https://github.com/ymauil/3Rstudy.git
+
+
+git reset --hard e8645c2
+## HEAD is now at e8645c2 second change in readme
+```
+奇妙吧，之前消失的commit又回来了！
+
+##  Git的工作原理
+
+说到这里，我想简要说一下git监控的工作原理，我们的3Rstudy文件夹中除了.git以外的地方都是被监视区域，称为工作区（working directory），也就是你进行各种操作的地方；剩下的.git文件夹，则是git的版本库（repo），记录你在工作区所作的每次改动，其中又分为暂存区和分支两块。
+
+监视流程：你进行了某次改动后，git一开始仅仅只会察觉到，而只有当你git add时，此次改动会被添加进版本库的暂存区，当你再git commit时，暂存区的改动将会融入到分支（文中为master主分支）中，形成一个版本节点，与当前工作区保持一致。
+
+
+
+```
+git checkout -- readme.txt 
+##git checkout指令就是用版本库里的当前版本来覆盖工作区的版本
+rm test.txt
+git rm test.txt
+## rm 'test.txt'删除文件
+git commit -m 'remove test.txt'
+## [master 7dcb016] remove test.txt
+##  1 file changed, 0 insertions(+), 0 deletions(-)
+##  delete mode 100644 test.txt
+
+git log --pretty=oneline --abbrev-commit
+##
+```
+
+
+之前我们所有的操作都是在master主分支中进行，但我们会经常有个新想法，想试验一下，写了几个文件，但又不想影响主分支，或者影响同伴的工作，怎么办？最好的就是，从master上叉出一条次分支，与master互不干扰，等到自己的开发成熟了，并且与同伴沟通好了，再把次分支合并到主分支上。这是git的最大特色了！
+
+
+## 创建及查看分支（git branch）
+
+```
+#找到我们现在的工作目录
+cd C:/Users/admin/Documents/GitHub/Git
+#创建一个开发分支HuiB
+git branch HuiB
+#查看目前有哪些分支
+git branch
+#切换分支
+git checkout HuiB
+#在分支上工作与commit
+git add Git.RMD
+git commit -m 'new changes by HuiB'
+git reflog
+```
+
+## 合并和删除分支（git merge）
+
+当你对新开发的特性很满意之后，想要把HuiB的改动全部合并到master，可以用`git merge BRANCHNAME`命令，首先要先切换到master分支：
+
+```
+git checkout master
+## Switched to branch 'master'
+## Your branch is up-to-date with 'origin/master'.
+
+git merge HuiB
+## Already up-to-date.
+
+git branch -d HuiB
+```
+
+# Git与Rstudio
+
+如何在Rstudio中使用Git实现对项目的版本管理<https://r-pkgs.org/git.html>。
+
+## 在Rstudio中建立本地Git存储库（Local Git Repository）
+
+安装过Git之后需要在Rstudio中打开相应选项`Global Options - Git/SVN - C:/Program Files/Git/bin/git.exe`。
+
+
+通过`File - New Project - New Directory (Existing Directory) - Create Project`新建一个带有Git存储库的项目。
+
+```{r, echo=F,out.width='25%', fig.align='center', fig.cap='...'}
+knitr::include_graphics(path='Create Project.png')
+```
+
+
+这个项目可以是在已有工作目录下，也可以新建工作目录。这时Rstudio会通过自动重启出现Git菜单。
+
+```{r, echo=F,out.width='25%', fig.align='center', fig.cap='...'}
+knitr::include_graphics(path='Choose Git files1.png')
+```
+
+## 在Rstudio的Git操作
+
+Git菜单会列出现有工作目录下所有的文件，文件前面有状态标识：
+- `M, Modified` 相对上一个Commit修改过的文档,
+- `?, Untracked`还没有被跟踪轨迹的文档,
+- `D, Delected` 被删除的文档。
+- `M,M` 标识文件种存在暂存的没有暂存过的两种修改。
+
+
+
+通过在`staged`上打勾选择需要跟踪版本的文件。
+
+```{r, echo=F,out.width='25%', fig.align='center', fig.cap='...'}
+knitr::include_graphics(path='staged the file.png')
+```
+
+
+首先，生成第一个Commit，等于进行了第一次备份：
+
+```{r, echo=F,out.width='25%', fig.align='center', fig.cap='...'}
+knitr::include_graphics(path='commit1.png')
+```
+
+
+其次，在Git.RMD中新增加了文字
+
+**新建带有Git的R-Project：`File - New Project - New Directory (Existing Directory) - Create Project`。**
+
+保存文档，此时Git菜单中Git.RMD文件的状态（Status）变成了`modified`：
+
+```{r, echo=F,out.width='25%', fig.align='center', fig.cap='...'}
+knitr::include_graphics(path='modify.png')
+```
+
+这时可以通过`Diff`按钮大概查看版本变化，对于变化可以选择`stage` 暂存或者`discard` 取消，等价于`git add`。
+
+```{r, echo=F,out.width='25%', fig.align='center', fig.cap='...'}
+knitr::include_graphics(path='changes.png')
+```
+
+
+然后，再生成一个Commit，等于进行了第二次备份：
+
+```{r, echo=F,out.width='25%', fig.align='center', fig.cap='...'}
+knitr::include_graphics(path='First changes.png')
+```
+
+
+备份后可以继续修改Git.RMD文档，新增加了文字**出现Git菜单**。然后再备份生成一个Commit：
+
+```{r, echo=F,out.width='25%', fig.align='center', fig.cap='...'}
+knitr::include_graphics(path='second changes.png')
+```
+
+
+备份可以按天或项目进度表逐次进行，如此往复。
+通过`History`按钮可以回看已经提交过Commit的所有文件版本，以及对应版本的修改。
+
+```{r, echo=F,out.width='25%', fig.align='center', fig.cap='...'}
+knitr::include_graphics(path='HIstory.png')
+```
+## 在Rstudio中建立Git分支
+
+可生成`Branch`分支，将Commit提交给分支。
+
+```{r, echo=F,out.width='25%', fig.align='center', fig.cap='...'}
+knitr::include_graphics(path='new branch.png')
+```
+
+使用R中Git进行的操作与使用Git shell进行操作是一致的，并且使用Git操作的过程Rstudio中也会直接显示出来。
+但是R中能进行的操作是有限的。
+
+```{r, echo=F,out.width='25%', fig.align='center', fig.cap='...'}
+knitr::include_graphics(path='HIstory with branch.png')
+```
+
+
+# GitHub
+
+Git是在本地使用的软件，用于记录对一组的文件变化。GitHub在互联网上为此类项目提供git主页，在internet上为基于git的项目提供了一个家。你可以把它想象成DropBox，但要比它好得多。远程主机充当git管理项目的分发通道或交换所。它允许其他人看到你的内容，与你同步，甚至可能做出改变。这些主机提供程序通过精心设计的基于web的接口改进了传统的Unix Git服务器。 
+
+- [GitHub Learning Lab](https://lab.github.com/)
+- [Happy Git and GitHub for the useR](https://happygitwithr.com/)
+
+## 克隆远程库（git clone）
+
+可以通过克隆远程Github共享项目，在本地开展进一步开发工作：
+
+```
+git clone git@github.com:${ymauil}/3Rstudy.git
+# 进入工作目录
+cd myapp
+# 编辑文件
+vim README.md
+# 添加修改版本
+git add .
+git commit -m "modi readme"
+
+```
+
+其中，你所需要修改的就是：${ymauil}改为你想克隆的仓库的创建者，3Rstudy改为仓库名称，
+其他不用动，注意，其中的:后面没有空格，不可习惯性的加上一个，否则报错！
+
+## 上传和下载远程库
+
+以后，在你想要把本地的commit推送到远程库时，只需记住这一个命令：`git push 3Rstudy master`，其中3Rstudy是远程库的名字，而master则是主分支的名字。
+
+这时，你再刷新一下github的3Rstudy页面，你会发现库中的内容和你本地一模一样了。注意：第一次push的时候，会有警告出现，输入yes即可，不用害怕~
+
+
+另外当我们希望在本地更新完成已经修改过的项目时，可以使用命令：`git pull`，其中3Rstudy是远程库的名字，而master则是主分支的名字。
+
+
+
+## github 国内替代产品
+
+- 开源中国旗下的代码管理平台：码云<https://gitee.com/>
+- 支持社交元素的代码托管平台：Coding.net <https://coding.net/>
+- 支持Mercurial和Git的代码托管网站: BitBucket <https://bitbucket.org/>
+- 极易搭建的自助Git服务: Springloops:<http://https://gogs.io/>
+- 开源的版本管理系统: GitLab <https://about.gitlab.com/>
+
+
+
+# 小结
+
+优点：
+
+-有效组织、记录与发布工作任务
+
+-是团队协作具有结构化，是异步工作模式与管理版本的强大工具
+
+-降低项目在网络呈现过程中的边际成本
+
+-Git 是R中有效的项目管理系统[(Cetinkaya-Rundel & Rundel 2017)](Cetinkaya-Rundel & Rundel 2017.pdf).
+
+
